@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE FUTURE | Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --concrete-dark: #121212;
+            --concrete-mid: #2a2a2a;
+            --concrete-light: #d1d1d1;
+            --chroma-neon: #00f2ff;
+            --chroma-hot: #ff0055;
+            --chroma-glow: rgba(0, 242, 255, 0.3);
+            --tectonic-edge: 4px;
+            --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background-color: var(--concrete-dark);
+            color: var(--concrete-light);
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--noise);
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* --- Buttons & UI Elements --- */
+        .btn-core {
+            background: none;
+            border: 1px solid var(--concrete-light);
+            color: var(--concrete-light);
+            padding: 0.5rem 1.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .btn-core:hover {
+            background: var(--concrete-light);
+            color: #000;
+            box-shadow: 0 0 20px var(--chroma-glow);
+        }
+
+        .btn-danger {
+            border-color: var(--chroma-hot);
+            color: var(--chroma-hot);
+        }
+        .btn-danger:hover {
+            background: var(--chroma-hot);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+        }
+
+        /* --- Tectonic Header --- */
+        header {
+            padding: 2rem 2rem;
+            border-bottom: 8px solid var(--concrete-mid);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, #181818 0%, #121212 100%);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--chroma-neon), var(--chroma-hot), var(--chroma-neon));
+            background-size: 200% 100%;
+            animation: moveGradient 4s linear infinite;
+        }
+
+        @keyframes moveGradient {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        .logo {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            color: transparent;
+            -webkit-text-stroke: 1px var(--concrete-light);
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .logo:hover {
+            color: var(--concrete-light);
+            text-shadow: 2px 2px 0px var(--chroma-hot);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .cart-trigger {
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+        .cart-trigger:hover { color: var(--chroma-neon); }
+        .cart-count { color: var(--chroma-hot); }
+
+        /* --- Interface Slab --- */
+        .interface-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: calc(100vh - 150px);
+        }
+
+        /* --- Sidebar Filters --- */
+        .sidebar {
+            padding: 2rem;
+            border-right: 1px solid var(--concrete-mid);
+            background: rgba(20, 20, 20, 0.5);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 150px;
+            height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        .filter-section {
+            margin-bottom: 3rem;
+        }
+
+        .filter-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--chroma-neon);
+            margin-bottom: 1.5rem;
+            display: block;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .search-input {
+            width: 100%;
+            background: #000;
+            border: 2px solid var(--concrete-mid);
+            padding: 1rem;
+            color: white;
+            font-family: 'Space Mono', monospace;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--chroma-neon);
+            box-shadow: 4px 4px 0px var(--chroma-neon);
+        }
+
+        /* Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: var(--concrete-mid);
+            height: 4px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--chroma-neon);
+            border: 2px solid #000;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        /* --- Product Grid --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1px;
+            background: var(--concrete-mid);
+            width: 100%;
+        }
+
+        .product-slab {
+            background: var(--concrete-dark);
+            padding: 2rem;
+            position: relative;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .product-slab:hover { background: #1a1a1a; z-index: 2; }
+        .product-slab:hover .product-img { transform: scale(1.05) rotate(-2deg); filter: grayscale(0%); }
+
+        .product-img {
+            position: absolute;
+            top: 10%; left: 10%; width: 80%; height: 50%;
+            background: var(--concrete-mid);
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.2);
+            transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 20px 20px 60px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        .product-info { position: relative; z-index: 3; }
+        .product-id {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--chroma-hot);
+            display: block;
+        }
+        .product-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 0.9;
+            margin-bottom: 1rem;
+        }
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--concrete-mid);
+            padding-top: 1rem;
+        }
+
+        /* --- VIEWS LOGIC --- */
+        .view-section { display: none; width: 100%; }
+        .view-section.active { display: block; }
+        #shop-view.active { display: grid; } /* Grid override for main shop */
+        
+        /* --- PRODUCT INSPECTION PAGE --- */
+        .detail-container {
+            padding: 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            min-height: 80vh;
+        }
+        .detail-visual {
+            background: var(--concrete-mid);
+            position: relative;
+            border: 1px solid var(--concrete-light);
+        }
+        .detail-img-box {
+            width: 100%; height: 100%;
+            background: linear-gradient(45deg, #222, #111);
+        }
+        .detail-data h1 {
+            font-size: 4rem;
+            line-height: 0.9;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .detail-price {
+            font-family: 'Space Mono';
+            font-size: 2rem;
+            color: var(--chroma-neon);
+            margin-bottom: 2rem;
+            display: block;
+        }
+        .detail-desc {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 3rem;
+            max-width: 600px;
+        }
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            font-family: 'Space Mono';
+            font-size: 0.8rem;
+            border-top: 1px solid var(--concrete-mid);
+            padding-top: 1rem;
+        }
+        .spec-item span { color: var(--concrete-light); opacity: 0.6; display: block;}
+
+        /* --- BASKET PAGE --- */
+        .cart-container {
+            padding: 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .cart-header {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--chroma-neon);
+            padding-bottom: 1rem;
+        }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Space Mono';
+            margin-bottom: 2rem;
+        }
+        .cart-table th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--concrete-light);
+            color: var(--chroma-neon);
+        }
+        .cart-table td {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid var(--concrete-mid);
+        }
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .qty-btn {
+            background: var(--concrete-mid);
+            border: none;
+            color: white;
+            width: 30px; height: 30px;
+            cursor: pointer;
+        }
+        .qty-btn:hover { background: var(--chroma-neon); color: #000; }
+        
+        .cart-summary {
+            text-align: right;
+            padding: 2rem;
+            background: var(--concrete-mid);
+            border: 1px solid var(--concrete-light);
+        }
+        .total-row {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 2rem;
+        }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--chroma-neon);
+            color: #000;
+            padding: 1rem 2rem;
+            font-family: 'Space Mono';
+            font-weight: bold;
+            transform: translateY(200%);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            box-shadow: 0 0 20px var(--chroma-glow);
+        }
+        #toast.show { transform: translateY(0); }
+
+        @media (max-width: 900px) {
+            .interface-container { grid-template-columns: 1fr; }
+            .sidebar { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--concrete-mid); }
+            .detail-container { grid-template-columns: 1fr; padding: 2rem; }
+            .detail-visual { height: 300px; }
+            #shop-view.active { display: block; } /* Stack on mobile */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" onclick="app.router('shop')">The Future</div>
+        <div class="header-controls">
+            <div class="nav-meta hidden-mobile">
+                [ SYS: ONLINE ]<br>
+                [ ID: GUEST ]
+            </div>
+            <button class="cart-trigger btn-core" onclick="app.router('cart')">
+                BASKET [<span class="cart-count">0</span>]
+            </button>
+        </div>
+    </header>
+
+    <div class="interface-container">
+        
+        <!-- SIDEBAR (Only visible in Shop View) -->
+        <aside class="sidebar" id="sidebar-panel">
+            <div class="filter-section">
+                <span class="filter-label">Search_Database</span>
+                <div class="search-wrap">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Keyword..." oninput="app.filterShop()">
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <span class="filter-label">Value_Limiter</span>
+                <div class="range-container">
+                    <input type="range" min="0" max="5000" value="5000" id="priceRange" oninput="app.filterShop()">
+                    <div style="display:flex; justify-content: space-between; margin-top: 10px; font-family: 'Space Mono'; font-size: 0.7rem;">
+                        <span>$0</span>
+                        <span id="priceVal" style="color: var(--chroma-neon)">$5000</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <span class="filter-label">Categories</span>
+                <div id="cat-filters">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main style="width: 100%;">
+            
+            <!-- VIEW: SHOP GRID -->
+            <section id="shop-view" class="view-section grid active">
+                <!-- Products injected here -->
+            </section>
+
+            <!-- VIEW: PRODUCT INSPECTION -->
+            <section id="product-view" class="view-section">
+                <div style="padding: 2rem;">
+                    <button class="btn-core" onclick="app.router('shop')">← RETURN TO GRID</button>
+                </div>
+                <div class="detail-container" id="detail-content">
+                    <!-- Detail content injected here -->
+                </div>
+            </section>
+
+            <!-- VIEW: BASKET -->
+            <section id="cart-view" class="view-section">
+                <div style="padding: 2rem;">
+                    <button class="btn-core" onclick="app.router('shop')">← CONTINUE SHOPPING</button>
+                </div>
+                <div class="cart-container">
+                    <h1 class="cart-header">Requisition Manifest</h1>
+                    <div id="cart-content">
+                        <!-- Cart items injected here -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast">ITEM ACQUIRED</div>
+
+    <script>
+        // --- DATA ---
+        const products = [
+            { id: 1, name: "Carbon Spine", price: 1200, cat: "Augment", sku: "NX-990", desc: "Reinforced carbon-fiber spinal column replacement. Increases load-bearing capacity by 400%.", color: "#333" },
+            { id: 2, name: "Void Lens", price: 850, cat: "Optic", sku: "OPTIC-V2", desc: "Full spectrum ocular implants. Includes thermal, night-vision, and WiFi packet sniffing.", color: "#224" },
+            { id: 3, name: "Plate Armor", price: 3400, cat: "Defense", sku: "SHIELD-01", desc: "Sub-dermal ceramic plating. Ballistic rating IV. Minimal rejection rate.", color: "#422" },
+            { id: 4, name: "Ghost Link", price: 2100, cat: "Neural", sku: "SYNC-X", desc: "Direct neural interface for cyberspace diving. Latency: 0.002ms.", color: "#133" },
+            { id: 5, name: "Pure Power", price: 5000, cat: "Core", sku: "CORE-00", desc: "Miniaturized nuclear battery. 50-year lifespan. Radiation shielding included.", color: "#440" },
+            { id: 6, name: "Neural Drive", price: 450, cat: "Neural", sku: "DRV-7", desc: "Memory expansion module. Adds 4PB of rapid-access storage to the temporal lobe.", color: "#222" },
+            { id: 7, name: "Kinetic Arm", price: 2800, cat: "Augment", sku: "ARM-K1", desc: "Hydraulic assisted limb replacement. Crush strength: 2 tons.", color: "#343" },
+            { id: 8, name: "Synth Skin", price: 600, cat: "Cosmetic", sku: "SKIN-09", desc: "Chroma-active synthetic epidermis. Change color/pattern via mobile app.", color: "#444" },
+        ];
+
+        // --- APP STATE ---
+        const app = {
+            cart: [],
+            
+            init: function() {
+                this.renderShop(products);
+                this.generateCategoryFilters();
+                this.updateCartCount();
+            },
+
+            // --- ROUTER ---
+            router: function(viewName) {
+                // Hide all views
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                
+                // Show requested view
+                if(viewName === 'shop') {
+                    document.getElementById('shop-view').classList.add('active');
+                    document.getElementById('sidebar-panel').style.display = 'block';
+                    document.querySelector('.interface-container').style.gridTemplateColumns = '300px 1fr';
+                } else {
+                    document.getElementById(`${viewName}-view`).classList.add('active');
+                    // Hide sidebar for detail/cart pages to give more room
+                    document.getElementById('sidebar-panel').style.display = 'none';
+                    document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
+                }
+
+                // Initial render triggers
+                if(viewName === 'cart') this.renderCart();
+                
+                // Mobile check
+                if(window.innerWidth < 900) {
+                     document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
+                }
+            },
+
+            // --- SHOP FUNCTIONS ---
+            renderShop: function(data) {
+                const grid = document.getElementById('shop-view');
+                grid.innerHTML = '';
+                
+                if(data.length === 0) {
+                    grid.innerHTML = '<div style="padding:2rem; font-family: Space Mono;">NO MATCHING RECORDS FOUND.</div>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const card = document.createElement('article');
+                    card.className = 'product-slab';
+                    card.onclick = (e) => {
+                        // Prevent click if clicking the buy button
+                        if(e.target.tagName !== 'BUTTON') this.openInspection(item.id);
+                    };
+                    
+                    card.innerHTML = `
+                        <div class="product-img" style="background: linear-gradient(135deg, ${item.color}, #000);"></div>
+                        <div class="product-info">
+                            <span class="product-id">#${item.sku}</span>
+                            <h2 class="product-title">${item.name}</h2>
+                            <div class="product-footer">
+                                <span class="price">$${item.price}</span>
+                                <button class="buy-btn btn-core" onclick="app.addToCart(${item.id})">ADD +</button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            },
+
+            generateCategoryFilters: function() {
+                const cats = [...new Set(products.map(p => p.cat))];
+                const container = document.getElementById('cat-filters');
+                cats.forEach(cat => {
+                    const tag = document.createElement('div');
+                    tag.innerHTML = `<a href="#" style="display:block; padding: 5px 0; color: var(--concrete-light); text-decoration: none; font-family: 'Space Mono'; border-bottom:1px solid #333;">// ${cat}</a>`;
+                    tag.onclick = (e) => {
+                        e.preventDefault();
+                        document.getElementById('searchInput').value = cat;
+                        this.filterShop();
+                    }
+                    container.appendChild(tag);
+                });
+            },
+
+            filterShop: function() {
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                const priceLimit = document.getElementById('priceRange').value;
+                
+                // Update Slider Visual
+                const output = document.getElementById('priceVal');
+                output.innerText = `$${priceLimit}`;
+                output.style.color = `hsl(${priceLimit / 50}, 100%, 50%)`;
+
+                const filtered = products.filter(item => {
+                    const matchesSearch = item.name.toLowerCase().includes(term) || item.cat.toLowerCase().includes(term);
+                    const matchesPrice = item.price <= priceLimit;
+                    return matchesSearch && matchesPrice;
+                });
+
+                this.renderShop(filtered);
+            },
+
+            // --- INSPECTION PAGE ---
+            openInspection: function(id) {
+                const item = products.find(p => p.id === id);
+                if(!item) return;
+
+                const container = document.getElementById('detail-content');
+                container.innerHTML = `
+                    <div class="detail-visual">
+                        <div class="detail-img-box" style="background: linear-gradient(135deg, ${item.color}, #111);"></div>
+                    </div>
+                    <div class="detail-data">
+                        <span style="font-family: 'Space Mono'; color: var(--chroma-hot);">// ID: ${item.sku}</span>
+                        <h1>${item.name}</h1>
+                        <span class="detail-price">$${item.price}.00</span>
+                        <p class="detail-desc">${item.desc} Features military-grade construction, neural-link compatibility, and a 5-year warranty against cyber-rot.</p>
+                        
+                        <div class="specs-grid">
+                            <div class="spec-item"><span>CLASS</span>${item.cat.toUpperCase()}</div>
+                            <div class="spec-item"><span>WEIGHT</span>2.4 KG</div>
+                            <div class="spec-item"><span>POWER</span>FUSION CELL</div>
+                            <div class="spec-item"><span>STATUS</span>IN STOCK</div>
+                        </div>
+
+                        <button class="btn-core" style="font-size: 1.2rem; padding: 1rem 3rem;" onclick="app.addToCart(${item.id})">
+                            INITIATE ACQUISITION
+                        </button>
+                    </div>
+                `;
+
+                this.router('product');
+            },
+
+            // --- CART LOGIC ---
+            addToCart: function(id) {
+                const existing = this.cart.find(i => i.id === id);
+                if(existing) {
+                    existing.qty++;
+                } else {
+                    this.cart.push({ id: id, qty: 1 });
+                }
+                this.updateCartCount();
+                this.showToast();
+            },
+
+            removeFromCart: function(id) {
+                this.cart = this.cart.filter(i => i.id !== id);
+                this.renderCart();
+                this.updateCartCount();
+            },
+
+            changeQty: function(id, delta) {
+                const item = this.cart.find(i => i.id === id);
+                if(item) {
+                    item.qty += delta;
+                    if(item.qty <= 0) this.removeFromCart(id);
+                    else this.renderCart();
+                }
+                this.updateCartCount();
+            },
+
+            updateCartCount: function() {
+                const count = this.cart.reduce((sum, item) => sum + item.qty, 0);
+                document.querySelector('.cart-count').innerText = count;
+            },
+
+            renderCart: function() {
+                const container = document.getElementById('cart-content');
+                if(this.cart.length === 0) {
+                    container.innerHTML = '<p style="font-family: Space Mono; font-size: 1.2rem;">// BASKET IS EMPTY</p>';
+                    return;
+                }
+
+                let total = 0;
+                let html = `
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th>PRODUCT</th>
+                                <th>PRICE</th>
+                                <th>QUANTITY</th>
+                                <th>SUBTOTAL</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                this.cart.forEach(cartItem => {
+                    const product = products.find(p => p.id === cartItem.id);
+                    const subtotal = product.price * cartItem.qty;
+                    total += subtotal;
+
+                    html += `
+                        <tr>
+                            <td>
+                                <span style="color: var(--chroma-hot); font-size: 0.8rem;">${product.sku}</span><br>
+                                <strong>${product.name}</strong>
+                            </td>
+                            <td>$${product.price}</td>
+                            <td>
+                                <div class="qty-controls">
+                                    <button class="qty-btn" onclick="app.changeQty(${product.id}, -1)">-</button>
+                                    <span>${cartItem.qty}</span>
+                                    <button class="qty-btn" onclick="app.changeQty(${product.id}, 1)">+</button>
+                                </div>
+                            </td>
+                            <td style="color: var(--chroma-neon);">$${subtotal}</td>
+                            <td>
+                                <button class="btn-core btn-danger" onclick="app.removeFromCart(${product.id})">X</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table>
+                    <div class="cart-summary">
+                        <div class="total-row">
+                            <span>TOTAL COST:</span>
+                            <span style="color: var(--chroma-neon); font-weight: bold;">$${total}.00</span>
+                        </div>
+                        <button class="btn-core" style="font-size: 1.1rem;">PROCEED TO CHECKOUT</button>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+            },
+
+            showToast: function() {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
+        };
+
+        // Start
+        app.init();
+
+    </script>
+</body>
+</html>
