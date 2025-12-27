@@ -155,9 +155,7 @@
             overflow-y: auto;
         }
 
-        .filter-section {
-            margin-bottom: 3rem;
-        }
+        .filter-section { margin-bottom: 3rem; }
 
         .filter-label {
             font-family: 'Space Mono', monospace;
@@ -372,25 +370,97 @@
             gap: 2rem;
         }
 
+        /* --- CHECKOUT STYLES --- */
+        .checkout-container {
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+        }
+        .panel-header {
+            font-size: 1.2rem;
+            color: var(--chroma-neon);
+            border-bottom: 1px solid var(--concrete-light);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            font-family: 'Space Mono';
+        }
+        .cyber-input {
+            width: 100%;
+            background: #050505;
+            border: 1px solid #333;
+            color: var(--concrete-light);
+            padding: 1rem;
+            font-family: 'Space Mono';
+            margin-bottom: 1.5rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .cyber-input:focus {
+            border-color: var(--chroma-neon);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        }
+        .form-group label {
+            display: block;
+            font-family: 'Space Mono';
+            font-size: 0.7rem;
+            margin-bottom: 0.5rem;
+            color: var(--chroma-hot);
+        }
+
+        /* --- SUCCESS ANIMATION --- */
+        #success-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            backdrop-filter: blur(10px);
+        }
+        #success-overlay.active { opacity: 1; pointer-events: all; }
+        .success-content { text-align: center; font-family: 'Space Mono'; }
+        
+        .checkmark {
+            width: 100px; height: 100px; border-radius: 50%;
+            display: block; stroke-width: 2; stroke: #0f0; stroke-miterlimit: 10;
+            margin: 0 auto 20px; box-shadow: inset 0px 0px 0px #0f0;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+        .checkmark__circle {
+            stroke-dasharray: 166; stroke-dashoffset: 166;
+            stroke-width: 2; stroke-miterlimit: 10; stroke: #0f0; fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark__check {
+            transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px rgba(0, 255, 0, 0.1); } }
+        .blink-text { font-size: 2rem; color: #0f0; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
         /* Toast Notification */
         #toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: var(--chroma-neon);
-            color: #000;
-            padding: 1rem 2rem;
-            font-family: 'Space Mono';
-            font-weight: bold;
-            transform: translateY(200%);
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-            box-shadow: 0 0 20px var(--chroma-glow);
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: var(--chroma-neon); color: #000;
+            padding: 1rem 2rem; font-family: 'Space Mono'; font-weight: bold;
+            transform: translateY(200%); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000; box-shadow: 0 0 20px var(--chroma-glow);
         }
         #toast.show { transform: translateY(0); }
 
         @media (max-width: 900px) {
             .interface-container { grid-template-columns: 1fr; }
+            .checkout-container { grid-template-columns: 1fr; }
             .sidebar { position: relative; top: 0; height: auto; border-right: none; border-bottom: 1px solid var(--concrete-mid); }
             .detail-container { grid-template-columns: 1fr; padding: 2rem; }
             .detail-visual { height: 300px; }
@@ -474,13 +544,73 @@
                 </div>
             </section>
 
+            <!-- VIEW: CHECKOUT -->
+            <section id="checkout-view" class="view-section">
+                <div style="padding: 2rem;">
+                    <button class="btn-core" onclick="app.router('cart')">← BACK TO MANIFEST</button>
+                </div>
+                
+                <div class="checkout-container">
+                    <!-- Order Summary -->
+                    <div class="checkout-panel">
+                        <h2 class="panel-header">TRANSACTION SUMMATION</h2>
+                        <div id="checkout-summary">
+                            <!-- Total Cost Injected Here -->
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <div class="checkout-panel">
+                        <h2 class="panel-header">SECURE CREDIT LINK</h2>
+                        <form id="payment-form" onsubmit="app.processPayment(event)">
+                            <div class="form-group">
+                                <label>CARD HOLDER IDENTITY</label>
+                                <input type="text" class="cyber-input" placeholder="JOHN DOE" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>CREDIT CHIP ID (16 DIGIT)</label>
+                                <input type="text" class="cyber-input" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label>EXPIRATION CYCLE</label>
+                                    <input type="text" class="cyber-input" placeholder="MM/YY" maxlength="5" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>SECURITY HASH (CVC)</label>
+                                    <input type="text" class="cyber-input" placeholder="123" maxlength="3" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-core" style="width: 100%; margin-top: 2rem; font-size: 1.2rem;">
+                                AUTHORIZE TRANSFER
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
         </main>
+    </div>
+
+    <!-- SUCCESS OVERLAY (Hidden by default) -->
+    <div id="success-overlay">
+        <div class="success-content">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <h2 class="blink-text">PAYMENT AUTHORIZED</h2>
+            <p>ASSETS TRANSFERRED TO INVENTORY</p>
+            <p style="font-size: 0.8rem; opacity: 0.7;">REDIRECTING TO GRID...</p>
+        </div>
     </div>
 
     <!-- TOAST NOTIFICATION -->
     <div id="toast">ITEM ACQUIRED</div>
 
-<!-- We need to treat this script as a module to use Firebase imports -->
 <script type="module">
     // 1. Import Firebase Functions from the CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -488,50 +618,42 @@
 
     // 2. PASTE YOUR CONFIG HERE (From Firebase Console > Project Settings)
     const firebaseConfig = {
-  apiKey: "AIzaSyDhUVJZ4wNVkofVqshjA1gOyDdJq0kQPlQ",
-  authDomain: "thefuture-3c41e.firebaseapp.com",
-  projectId: "thefuture-3c41e",
-  storageBucket: "thefuture-3c41e.firebasestorage.app",
-  messagingSenderId: "188511853588",
-  appId: "1:188511853588:web:f37ae605221437cd8edb01",
-  measurementId: "G-1MYR3MZZ38"
-};
+      apiKey: "AIzaSyDhUVJZ4wNVkofVqshjA1gOyDdJq0kQPlQ",
+      authDomain: "thefuture-3c41e.firebaseapp.com",
+      projectId: "thefuture-3c41e",
+      storageBucket: "thefuture-3c41e.firebasestorage.app",
+      messagingSenderId: "188511853588",
+      appId: "1:188511853588:web:f37ae605221437cd8edb01",
+      measurementId: "G-1MYR3MZZ38"
+    };
 
     // 3. Initialize Firebase
     const firebaseApp = initializeApp(firebaseConfig);
     const db = getFirestore(firebaseApp);
 
     // --- APP LOGIC ---
-    
-    // We attach 'app' to the window object so your HTML onclick="..." attributes still work
     window.app = {
-        products: [], // This is now empty, waiting for DB data
+        products: [], 
         cart: [],
         
         init: async function() {
             console.log("INITIALIZING SYSTEM...");
-            await this.fetchProductsFromDB(); // Wait for data
+            await this.fetchProductsFromDB();
             this.updateCartCount();
         },
 
-        // NEW FUNCTION: Fetch data from Firebase
         fetchProductsFromDB: async function() {
             const grid = document.getElementById('shop-view');
             grid.innerHTML = '<div style="padding:2rem; font-family: Space Mono;">[ CONNECTING TO MAINFRAME... ]</div>';
 
             try {
-                // Get reference to 'products' collection
                 const querySnapshot = await getDocs(collection(db, "products"));
-                
-                // Convert Firebase documents to our array format
                 this.products = querySnapshot.docs.map(doc => ({
-                    id: doc.id, // Use the Firebase random ID
-                    ...doc.data() // Spread the rest of the data (name, price, etc)
+                    id: doc.id,
+                    ...doc.data()
                 }));
 
                 console.log("DATA ACQUIRED:", this.products);
-
-                // Now render the UI
                 this.renderShop(this.products);
                 this.generateCategoryFilters();
 
@@ -545,6 +667,7 @@
         router: function(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             
+            // View Management
             if(viewName === 'shop') {
                 document.getElementById('shop-view').classList.add('active');
                 document.getElementById('sidebar-panel').style.display = 'block';
@@ -555,7 +678,25 @@
                 document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
             }
 
+            // Specific View Logic
             if(viewName === 'cart') this.renderCart();
+            
+            if(viewName === 'checkout') {
+                // Calculate total for checkout summary
+                const total = this.cart.reduce((sum, item) => {
+                    const product = this.products.find(p => p.id === item.id);
+                    return sum + (product ? product.price * item.qty : 0);
+                }, 0);
+                document.getElementById('checkout-summary').innerHTML = `
+                    <div style="font-size: 3rem; color: var(--concrete-light); margin-bottom: 1rem;">$${total}.00</div>
+                    <div style="font-family: 'Space Mono'; font-size: 0.8rem; color: var(--concrete-light);">
+                        TOTAL ITEMS: ${this.cart.reduce((s, i) => s + i.qty, 0)}<br>
+                        TAX: INCLUDED<br>
+                        SHIPPING: DIGITAL LINK
+                    </div>
+                `;
+            }
+
             if(window.innerWidth < 900) {
                     document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
             }
@@ -574,7 +715,6 @@
             data.forEach(item => {
                 const card = document.createElement('article');
                 card.className = 'product-slab';
-                // Note: We pass the ID as a string now because Firebase IDs are strings
                 card.onclick = (e) => {
                     if(e.target.tagName !== 'BUTTON') this.openInspection(item.id);
                 };
@@ -597,7 +737,7 @@
         generateCategoryFilters: function() {
             const cats = [...new Set(this.products.map(p => p.cat))];
             const container = document.getElementById('cat-filters');
-            container.innerHTML = ''; // Clear previous
+            container.innerHTML = '';
             cats.forEach(cat => {
                 const tag = document.createElement('div');
                 tag.innerHTML = `<a href="#" style="display:block; padding: 5px 0; color: var(--concrete-light); text-decoration: none; font-family: 'Space Mono'; border-bottom:1px solid #333;">// ${cat}</a>`;
@@ -619,7 +759,6 @@
             output.style.color = `hsl(${priceLimit / 50}, 100%, 50%)`;
 
             const filtered = this.products.filter(item => {
-                // Safety check in case data is missing fields
                 const name = item.name ? item.name.toLowerCase() : '';
                 const cat = item.cat ? item.cat.toLowerCase() : '';
                 
@@ -659,7 +798,6 @@
                     </button>
                 </div>
             `;
-
             this.router('product');
         },
 
@@ -747,17 +885,52 @@
                 }
             });
 
+            // UPDATED BUTTON TO GO TO CHECKOUT ROUTE
             html += `</tbody></table>
                 <div class="cart-summary">
                     <div class="total-row">
                         <span>TOTAL COST:</span>
                         <span style="color: var(--chroma-neon); font-weight: bold;">$${total}.00</span>
                     </div>
-                    <button class="btn-core" style="font-size: 1.1rem;">PROCEED TO CHECKOUT</button>
+                    <button class="btn-core" style="font-size: 1.1rem;" onclick="app.router('checkout')">PROCEED TO CHECKOUT</button>
                 </div>
             `;
 
             container.innerHTML = html;
+        },
+
+        processPayment: function(e) {
+            e.preventDefault(); 
+            
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            
+            // 1. Loading State
+            btn.innerText = "ESTABLISHING SECURE CONNECTION...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            // 2. Mock Delay (2 seconds)
+            setTimeout(() => {
+                // 3. Show Success Overlay
+                document.getElementById('success-overlay').classList.add('active');
+                
+                // 4. Clear Cart
+                this.cart = [];
+                this.updateCartCount();
+
+                // 5. Redirect after animation (3 seconds)
+                setTimeout(() => {
+                    document.getElementById('success-overlay').classList.remove('active');
+                    document.getElementById('payment-form').reset();
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    
+                    this.router('shop'); // Go back to home
+                }, 3000);
+
+            }, 2000);
         },
 
         showToast: function() {
