@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYS_ADMIN | OVERRIDE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --terminal-green: #0f0;
+            --terminal-dim: rgba(0, 255, 0, 0.2);
+            --danger: #ff0055;
+            --border: 1px solid var(--terminal-green);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--terminal-green);
+            font-family: 'Space Mono', monospace;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Scanline Effect */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        header {
+            border-bottom: 2px solid var(--terminal-green);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        h1 { text-transform: uppercase; letter-spacing: 2px; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+
+        /* --- FORMS --- */
+        .panel {
+            border: var(--border);
+            padding: 1.5rem;
+            background: rgba(0, 20, 0, 0.3);
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.8rem; opacity: 0.8; }
+        
+        input, textarea, select {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--terminal-green);
+            padding: 0.8rem;
+            font-family: 'Space Mono';
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--terminal-green);
+            box-shadow: 0 0 10px var(--terminal-dim);
+        }
+
+        button {
+            background: var(--terminal-green);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            width: 100%;
+            font-family: 'Space Mono';
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            box-shadow: 0 0 15px var(--terminal-green);
+        }
+
+        /* --- INVENTORY LIST --- */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .item-card {
+            border: 1px solid #333;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .item-sku { font-size: 0.7rem; opacity: 0.7; }
+        .item-title { font-weight: bold; margin: 0.5rem 0; font-size: 1.1rem; }
+        .item-price { color: #fff; }
+
+        .btn-delete {
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 0.3rem;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            color: #fff;
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        #status { margin-top: 1rem; font-size: 0.8rem; height: 20px; }
+
+        @media (max-width: 800px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Master_Control</h1>
+            <small>DATABASE ACCESS LEVEL: ROOT</small>
+        </div>
+        <a href="index.html" style="color: var(--terminal-green);">[ VIEW STORE ]</a>
+    </header>
+
+    <div class="layout">
+        
+        <!-- ADD PRODUCT FORM -->
+        <aside class="panel">
+            <h3 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">>> INJECT_NEW_DATA</h3>
+            
+            <form id="addForm">
+                <div class="form-group">
+                    <label>PRODUCT NAME</label>
+                    <input type="text" id="name" required placeholder="e.g. Plasma Rifle">
+                </div>
+
+                <div class="form-group">
+                    <label>SKU (ID)</label>
+                    <input type="text" id="sku" required placeholder="e.g. WPN-99">
+                </div>
+
+                <div class="form-group">
+                    <label>PRICE ($)</label>
+                    <input type="number" id="price" required placeholder="5000">
+                </div>
+
+                <div class="form-group">
+                    <label>CATEGORY</label>
+                    <select id="cat">
+                        <option value="Augment">Augment</option>
+                        <option value="Neural">Neural</option>
+                        <option value="Defense">Defense</option>
+                        <option value="Optic">Optic</option>
+                        <option value="Core">Core</option>
+                        <option value="Cosmetic">Cosmetic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>COLOR HEX</label>
+                    <input type="color" id="color" value="#00ff00" style="height: 50px; cursor: pointer;">
+                </div>
+
+                <div class="form-group">
+                    <label>DESCRIPTION</label>
+                    <textarea id="desc" rows="4" required placeholder="Technical specifications..."></textarea>
+                </div>
+
+                <button type="submit">UPLOAD TO DATABASE</button>
+                <div id="status"></div>
+            </form>
+        </aside>
+
+        <!-- LIVE DATABASE VIEW -->
+        <main class="panel">
+            <h3 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">>> CURRENT_MANIFEST</h3>
+            <div id="inventory" class="inventory-grid">
+                <!-- Items load here -->
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // 1. IMPORT FIREBASE (Must match the one in index.html)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 2. PASTE YOUR CONFIG HERE (EXACTLY THE SAME AS INDEX.HTML)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY_HERE",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456...",
+            appId: "1:123456..."
+        };
+
+        // 3. INIT
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- FUNCTIONS ---
+
+        // A. LISTEN FOR DATA (Real-time updates)
+        // Unlike 'getDocs', 'onSnapshot' stays open and updates instantly when data changes
+        const renderInventory = () => {
+            const grid = document.getElementById('inventory');
+            
+            onSnapshot(collection(db, "products"), (snapshot) => {
+                grid.innerHTML = ''; // Clear list
+                
+                snapshot.forEach((docSnap) => {
+                    const item = docSnap.data();
+                    const id = docSnap.id;
+
+                    const el = document.createElement('div');
+                    el.className = 'item-card';
+                    el.innerHTML = `
+                        <div class="item-sku">[${item.sku}]</div>
+                        <div class="item-title">${item.name}</div>
+                        <div class="item-price">$${item.price}</div>
+                        <div style="font-size:0.8rem; color:#888;">${item.cat}</div>
+                        <button class="btn-delete" id="del-${id}">DELETE RECORD</button>
+                    `;
+                    grid.appendChild(el);
+
+                    // Add Delete Listener
+                    document.getElementById(`del-${id}`).addEventListener('click', () => {
+                        deleteItem(id, item.name);
+                    });
+                });
+            });
+        };
+
+        // B. ADD ITEM
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            status.innerText = "UPLOADING...";
+
+            try {
+                // Prepare Data Object
+                const newItem = {
+                    name: document.getElementById('name').value,
+                    sku: document.getElementById('sku').value,
+                    price: Number(document.getElementById('price').value),
+                    cat: document.getElementById('cat').value,
+                    color: document.getElementById('color').value,
+                    desc: document.getElementById('desc').value
+                };
+
+                // Push to Firebase
+                await addDoc(collection(db, "products"), newItem);
+                
+                // Success
+                status.innerText = "SUCCESS: RECORD ADDED";
+                status.style.color = "var(--terminal-green)";
+                document.getElementById('addForm').reset();
+                
+            } catch (err) {
+                console.error(err);
+                status.innerText = "ERROR: WRITE FAILED";
+                status.style.color = "var(--danger)";
+            }
+        });
+
+        // C. DELETE ITEM
+        const deleteItem = async (id, name) => {
+            if(confirm(`WARNING: PERMANENTLY DELETE "${name}"?`)) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                } catch (err) {
+                    alert("Delete Failed: " + err.message);
+                }
+            }
+        };
+
+        // START SYSTEM
+        renderInventory();
+
+    </script>
+</body>
+</html>
