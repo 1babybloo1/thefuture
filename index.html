@@ -480,210 +480,247 @@
     <!-- TOAST NOTIFICATION -->
     <div id="toast">ITEM ACQUIRED</div>
 
-    <script>
-        // --- DATA ---
-        const products = [
-            { id: 1, name: "Carbon Spine", price: 1200, cat: "Augment", sku: "NX-990", desc: "Reinforced carbon-fiber spinal column replacement. Increases load-bearing capacity by 400%.", color: "#333" },
-            { id: 2, name: "Void Lens", price: 850, cat: "Optic", sku: "OPTIC-V2", desc: "Full spectrum ocular implants. Includes thermal, night-vision, and WiFi packet sniffing.", color: "#224" },
-            { id: 3, name: "Plate Armor", price: 3400, cat: "Defense", sku: "SHIELD-01", desc: "Sub-dermal ceramic plating. Ballistic rating IV. Minimal rejection rate.", color: "#422" },
-            { id: 4, name: "Ghost Link", price: 2100, cat: "Neural", sku: "SYNC-X", desc: "Direct neural interface for cyberspace diving. Latency: 0.002ms.", color: "#133" },
-            { id: 5, name: "Pure Power", price: 5000, cat: "Core", sku: "CORE-00", desc: "Miniaturized nuclear battery. 50-year lifespan. Radiation shielding included.", color: "#440" },
-            { id: 6, name: "Neural Drive", price: 450, cat: "Neural", sku: "DRV-7", desc: "Memory expansion module. Adds 4PB of rapid-access storage to the temporal lobe.", color: "#222" },
-            { id: 7, name: "Kinetic Arm", price: 2800, cat: "Augment", sku: "ARM-K1", desc: "Hydraulic assisted limb replacement. Crush strength: 2 tons.", color: "#343" },
-            { id: 8, name: "Synth Skin", price: 600, cat: "Cosmetic", sku: "SKIN-09", desc: "Chroma-active synthetic epidermis. Change color/pattern via mobile app.", color: "#444" },
-        ];
+<!-- We need to treat this script as a module to use Firebase imports -->
+<script type="module">
+    // 1. Import Firebase Functions from the CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- APP STATE ---
-        const app = {
-            cart: [],
-            
-            init: function() {
-                this.renderShop(products);
+    // 2. PASTE YOUR CONFIG HERE (From Firebase Console > Project Settings)
+    const firebaseConfig = {
+  apiKey: "AIzaSyDhUVJZ4wNVkofVqshjA1gOyDdJq0kQPlQ",
+  authDomain: "thefuture-3c41e.firebaseapp.com",
+  projectId: "thefuture-3c41e",
+  storageBucket: "thefuture-3c41e.firebasestorage.app",
+  messagingSenderId: "188511853588",
+  appId: "1:188511853588:web:f37ae605221437cd8edb01",
+  measurementId: "G-1MYR3MZZ38"
+};
+
+    // 3. Initialize Firebase
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
+    // --- APP LOGIC ---
+    
+    // We attach 'app' to the window object so your HTML onclick="..." attributes still work
+    window.app = {
+        products: [], // This is now empty, waiting for DB data
+        cart: [],
+        
+        init: async function() {
+            console.log("INITIALIZING SYSTEM...");
+            await this.fetchProductsFromDB(); // Wait for data
+            this.updateCartCount();
+        },
+
+        // NEW FUNCTION: Fetch data from Firebase
+        fetchProductsFromDB: async function() {
+            const grid = document.getElementById('shop-view');
+            grid.innerHTML = '<div style="padding:2rem; font-family: Space Mono;">[ CONNECTING TO MAINFRAME... ]</div>';
+
+            try {
+                // Get reference to 'products' collection
+                const querySnapshot = await getDocs(collection(db, "products"));
+                
+                // Convert Firebase documents to our array format
+                this.products = querySnapshot.docs.map(doc => ({
+                    id: doc.id, // Use the Firebase random ID
+                    ...doc.data() // Spread the rest of the data (name, price, etc)
+                }));
+
+                console.log("DATA ACQUIRED:", this.products);
+
+                // Now render the UI
+                this.renderShop(this.products);
                 this.generateCategoryFilters();
-                this.updateCartCount();
-            },
 
-            // --- ROUTER ---
-            router: function(viewName) {
-                // Hide all views
-                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-                
-                // Show requested view
-                if(viewName === 'shop') {
-                    document.getElementById('shop-view').classList.add('active');
-                    document.getElementById('sidebar-panel').style.display = 'block';
-                    document.querySelector('.interface-container').style.gridTemplateColumns = '300px 1fr';
-                } else {
-                    document.getElementById(`${viewName}-view`).classList.add('active');
-                    // Hide sidebar for detail/cart pages to give more room
-                    document.getElementById('sidebar-panel').style.display = 'none';
+            } catch (error) {
+                console.error("CONNECTION FAILURE:", error);
+                grid.innerHTML = `<div style="padding:2rem; color: var(--chroma-hot);">[ SYSTEM ERROR: ${error.message} ]</div>`;
+            }
+        },
+
+        // --- ROUTER ---
+        router: function(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            
+            if(viewName === 'shop') {
+                document.getElementById('shop-view').classList.add('active');
+                document.getElementById('sidebar-panel').style.display = 'block';
+                document.querySelector('.interface-container').style.gridTemplateColumns = '300px 1fr';
+            } else {
+                document.getElementById(`${viewName}-view`).classList.add('active');
+                document.getElementById('sidebar-panel').style.display = 'none';
+                document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
+            }
+
+            if(viewName === 'cart') this.renderCart();
+            if(window.innerWidth < 900) {
                     document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
-                }
+            }
+        },
 
-                // Initial render triggers
-                if(viewName === 'cart') this.renderCart();
+        // --- SHOP FUNCTIONS ---
+        renderShop: function(data) {
+            const grid = document.getElementById('shop-view');
+            grid.innerHTML = '';
+            
+            if(data.length === 0) {
+                grid.innerHTML = '<div style="padding:2rem; font-family: Space Mono;">NO MATCHING RECORDS FOUND.</div>';
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('article');
+                card.className = 'product-slab';
+                // Note: We pass the ID as a string now because Firebase IDs are strings
+                card.onclick = (e) => {
+                    if(e.target.tagName !== 'BUTTON') this.openInspection(item.id);
+                };
                 
-                // Mobile check
-                if(window.innerWidth < 900) {
-                     document.querySelector('.interface-container').style.gridTemplateColumns = '1fr';
-                }
-            },
+                card.innerHTML = `
+                    <div class="product-img" style="background: linear-gradient(135deg, ${item.color || '#333'}, #000);"></div>
+                    <div class="product-info">
+                        <span class="product-id">#${item.sku}</span>
+                        <h2 class="product-title">${item.name}</h2>
+                        <div class="product-footer">
+                            <span class="price">$${item.price}</span>
+                            <button class="buy-btn btn-core" onclick="window.app.addToCart('${item.id}')">ADD +</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        },
 
-            // --- SHOP FUNCTIONS ---
-            renderShop: function(data) {
-                const grid = document.getElementById('shop-view');
-                grid.innerHTML = '';
+        generateCategoryFilters: function() {
+            const cats = [...new Set(this.products.map(p => p.cat))];
+            const container = document.getElementById('cat-filters');
+            container.innerHTML = ''; // Clear previous
+            cats.forEach(cat => {
+                const tag = document.createElement('div');
+                tag.innerHTML = `<a href="#" style="display:block; padding: 5px 0; color: var(--concrete-light); text-decoration: none; font-family: 'Space Mono'; border-bottom:1px solid #333;">// ${cat}</a>`;
+                tag.onclick = (e) => {
+                    e.preventDefault();
+                    document.getElementById('searchInput').value = cat;
+                    this.filterShop();
+                }
+                container.appendChild(tag);
+            });
+        },
+
+        filterShop: function() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const priceLimit = document.getElementById('priceRange').value;
+            
+            const output = document.getElementById('priceVal');
+            output.innerText = `$${priceLimit}`;
+            output.style.color = `hsl(${priceLimit / 50}, 100%, 50%)`;
+
+            const filtered = this.products.filter(item => {
+                // Safety check in case data is missing fields
+                const name = item.name ? item.name.toLowerCase() : '';
+                const cat = item.cat ? item.cat.toLowerCase() : '';
                 
-                if(data.length === 0) {
-                    grid.innerHTML = '<div style="padding:2rem; font-family: Space Mono;">NO MATCHING RECORDS FOUND.</div>';
-                    return;
-                }
+                const matchesSearch = name.includes(term) || cat.includes(term);
+                const matchesPrice = item.price <= priceLimit;
+                return matchesSearch && matchesPrice;
+            });
 
-                data.forEach(item => {
-                    const card = document.createElement('article');
-                    card.className = 'product-slab';
-                    card.onclick = (e) => {
-                        // Prevent click if clicking the buy button
-                        if(e.target.tagName !== 'BUTTON') this.openInspection(item.id);
-                    };
+            this.renderShop(filtered);
+        },
+
+        // --- INSPECTION PAGE ---
+        openInspection: function(id) {
+            const item = this.products.find(p => p.id === id);
+            if(!item) return;
+
+            const container = document.getElementById('detail-content');
+            container.innerHTML = `
+                <div class="detail-visual">
+                    <div class="detail-img-box" style="background: linear-gradient(135deg, ${item.color || '#333'}, #111);"></div>
+                </div>
+                <div class="detail-data">
+                    <span style="font-family: 'Space Mono'; color: var(--chroma-hot);">// ID: ${item.sku}</span>
+                    <h1>${item.name}</h1>
+                    <span class="detail-price">$${item.price}.00</span>
+                    <p class="detail-desc">${item.desc}</p>
                     
-                    card.innerHTML = `
-                        <div class="product-img" style="background: linear-gradient(135deg, ${item.color}, #000);"></div>
-                        <div class="product-info">
-                            <span class="product-id">#${item.sku}</span>
-                            <h2 class="product-title">${item.name}</h2>
-                            <div class="product-footer">
-                                <span class="price">$${item.price}</span>
-                                <button class="buy-btn btn-core" onclick="app.addToCart(${item.id})">ADD +</button>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            },
-
-            generateCategoryFilters: function() {
-                const cats = [...new Set(products.map(p => p.cat))];
-                const container = document.getElementById('cat-filters');
-                cats.forEach(cat => {
-                    const tag = document.createElement('div');
-                    tag.innerHTML = `<a href="#" style="display:block; padding: 5px 0; color: var(--concrete-light); text-decoration: none; font-family: 'Space Mono'; border-bottom:1px solid #333;">// ${cat}</a>`;
-                    tag.onclick = (e) => {
-                        e.preventDefault();
-                        document.getElementById('searchInput').value = cat;
-                        this.filterShop();
-                    }
-                    container.appendChild(tag);
-                });
-            },
-
-            filterShop: function() {
-                const term = document.getElementById('searchInput').value.toLowerCase();
-                const priceLimit = document.getElementById('priceRange').value;
-                
-                // Update Slider Visual
-                const output = document.getElementById('priceVal');
-                output.innerText = `$${priceLimit}`;
-                output.style.color = `hsl(${priceLimit / 50}, 100%, 50%)`;
-
-                const filtered = products.filter(item => {
-                    const matchesSearch = item.name.toLowerCase().includes(term) || item.cat.toLowerCase().includes(term);
-                    const matchesPrice = item.price <= priceLimit;
-                    return matchesSearch && matchesPrice;
-                });
-
-                this.renderShop(filtered);
-            },
-
-            // --- INSPECTION PAGE ---
-            openInspection: function(id) {
-                const item = products.find(p => p.id === id);
-                if(!item) return;
-
-                const container = document.getElementById('detail-content');
-                container.innerHTML = `
-                    <div class="detail-visual">
-                        <div class="detail-img-box" style="background: linear-gradient(135deg, ${item.color}, #111);"></div>
+                    <div class="specs-grid">
+                        <div class="spec-item"><span>CLASS</span>${item.cat ? item.cat.toUpperCase() : 'N/A'}</div>
+                        <div class="spec-item"><span>WEIGHT</span>2.4 KG</div>
+                        <div class="spec-item"><span>POWER</span>FUSION CELL</div>
+                        <div class="spec-item"><span>STATUS</span>IN STOCK</div>
                     </div>
-                    <div class="detail-data">
-                        <span style="font-family: 'Space Mono'; color: var(--chroma-hot);">// ID: ${item.sku}</span>
-                        <h1>${item.name}</h1>
-                        <span class="detail-price">$${item.price}.00</span>
-                        <p class="detail-desc">${item.desc} Features military-grade construction, neural-link compatibility, and a 5-year warranty against cyber-rot.</p>
-                        
-                        <div class="specs-grid">
-                            <div class="spec-item"><span>CLASS</span>${item.cat.toUpperCase()}</div>
-                            <div class="spec-item"><span>WEIGHT</span>2.4 KG</div>
-                            <div class="spec-item"><span>POWER</span>FUSION CELL</div>
-                            <div class="spec-item"><span>STATUS</span>IN STOCK</div>
-                        </div>
 
-                        <button class="btn-core" style="font-size: 1.2rem; padding: 1rem 3rem;" onclick="app.addToCart(${item.id})">
-                            INITIATE ACQUISITION
-                        </button>
-                    </div>
-                `;
+                    <button class="btn-core" style="font-size: 1.2rem; padding: 1rem 3rem;" onclick="window.app.addToCart('${item.id}')">
+                        INITIATE ACQUISITION
+                    </button>
+                </div>
+            `;
 
-                this.router('product');
-            },
+            this.router('product');
+        },
 
-            // --- CART LOGIC ---
-            addToCart: function(id) {
-                const existing = this.cart.find(i => i.id === id);
-                if(existing) {
-                    existing.qty++;
-                } else {
-                    this.cart.push({ id: id, qty: 1 });
-                }
-                this.updateCartCount();
-                this.showToast();
-            },
+        // --- CART LOGIC ---
+        addToCart: function(id) {
+            const existing = this.cart.find(i => i.id === id);
+            if(existing) {
+                existing.qty++;
+            } else {
+                this.cart.push({ id: id, qty: 1 });
+            }
+            this.updateCartCount();
+            this.showToast();
+        },
 
-            removeFromCart: function(id) {
-                this.cart = this.cart.filter(i => i.id !== id);
-                this.renderCart();
-                this.updateCartCount();
-            },
+        removeFromCart: function(id) {
+            this.cart = this.cart.filter(i => i.id !== id);
+            this.renderCart();
+            this.updateCartCount();
+        },
 
-            changeQty: function(id, delta) {
-                const item = this.cart.find(i => i.id === id);
-                if(item) {
-                    item.qty += delta;
-                    if(item.qty <= 0) this.removeFromCart(id);
-                    else this.renderCart();
-                }
-                this.updateCartCount();
-            },
+        changeQty: function(id, delta) {
+            const item = this.cart.find(i => i.id === id);
+            if(item) {
+                item.qty += delta;
+                if(item.qty <= 0) this.removeFromCart(id);
+                else this.renderCart();
+            }
+            this.updateCartCount();
+        },
 
-            updateCartCount: function() {
-                const count = this.cart.reduce((sum, item) => sum + item.qty, 0);
-                document.querySelector('.cart-count').innerText = count;
-            },
+        updateCartCount: function() {
+            const count = this.cart.reduce((sum, item) => sum + item.qty, 0);
+            document.querySelector('.cart-count').innerText = count;
+        },
 
-            renderCart: function() {
-                const container = document.getElementById('cart-content');
-                if(this.cart.length === 0) {
-                    container.innerHTML = '<p style="font-family: Space Mono; font-size: 1.2rem;">// BASKET IS EMPTY</p>';
-                    return;
-                }
+        renderCart: function() {
+            const container = document.getElementById('cart-content');
+            if(this.cart.length === 0) {
+                container.innerHTML = '<p style="font-family: Space Mono; font-size: 1.2rem;">// BASKET IS EMPTY</p>';
+                return;
+            }
 
-                let total = 0;
-                let html = `
-                    <table class="cart-table">
-                        <thead>
-                            <tr>
-                                <th>PRODUCT</th>
-                                <th>PRICE</th>
-                                <th>QUANTITY</th>
-                                <th>SUBTOTAL</th>
-                                <th>ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
+            let total = 0;
+            let html = `
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>PRODUCT</th>
+                            <th>PRICE</th>
+                            <th>QUANTITY</th>
+                            <th>SUBTOTAL</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-                this.cart.forEach(cartItem => {
-                    const product = products.find(p => p.id === cartItem.id);
+            this.cart.forEach(cartItem => {
+                const product = this.products.find(p => p.id === cartItem.id);
+                if(product) {
                     const subtotal = product.price * cartItem.qty;
                     total += subtotal;
 
@@ -696,42 +733,42 @@
                             <td>$${product.price}</td>
                             <td>
                                 <div class="qty-controls">
-                                    <button class="qty-btn" onclick="app.changeQty(${product.id}, -1)">-</button>
+                                    <button class="qty-btn" onclick="window.app.changeQty('${product.id}', -1)">-</button>
                                     <span>${cartItem.qty}</span>
-                                    <button class="qty-btn" onclick="app.changeQty(${product.id}, 1)">+</button>
+                                    <button class="qty-btn" onclick="window.app.changeQty('${product.id}', 1)">+</button>
                                 </div>
                             </td>
                             <td style="color: var(--chroma-neon);">$${subtotal}</td>
                             <td>
-                                <button class="btn-core btn-danger" onclick="app.removeFromCart(${product.id})">X</button>
+                                <button class="btn-core btn-danger" onclick="window.app.removeFromCart('${product.id}')">X</button>
                             </td>
                         </tr>
                     `;
-                });
+                }
+            });
 
-                html += `</tbody></table>
-                    <div class="cart-summary">
-                        <div class="total-row">
-                            <span>TOTAL COST:</span>
-                            <span style="color: var(--chroma-neon); font-weight: bold;">$${total}.00</span>
-                        </div>
-                        <button class="btn-core" style="font-size: 1.1rem;">PROCEED TO CHECKOUT</button>
+            html += `</tbody></table>
+                <div class="cart-summary">
+                    <div class="total-row">
+                        <span>TOTAL COST:</span>
+                        <span style="color: var(--chroma-neon); font-weight: bold;">$${total}.00</span>
                     </div>
-                `;
+                    <button class="btn-core" style="font-size: 1.1rem;">PROCEED TO CHECKOUT</button>
+                </div>
+            `;
 
-                container.innerHTML = html;
-            },
+            container.innerHTML = html;
+        },
 
-            showToast: function() {
-                const toast = document.getElementById('toast');
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
-            }
-        };
+        showToast: function() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+    };
 
-        // Start
-        app.init();
-
-    </script>
+    // START THE APP
+    window.app.init();
+</script>
 </body>
 </html>
